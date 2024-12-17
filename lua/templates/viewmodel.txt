@@ -1,0 +1,12 @@
+//
+//  {filename}.swift
+//
+//
+//  Created by Anton Nikitenko on {date}.
+//
+
+import Foundation
+
+final class {filename}: ObservableObject {
+    init() {}
+}

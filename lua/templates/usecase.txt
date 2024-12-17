@@ -1,0 +1,20 @@
+//
+//  {filename}.swift
+//
+//
+//  Created by Anton Nikitenko on {date}.
+//
+
+import Foundation
+
+public protocol {filename} {
+    func callAsFunction() async -> Result<String, Error>
+}
+
+public final class {filename}Impl: {filename} {
+    public init() {}
+
+    public func callAsFunction() async -> Result<String, Error> {
+	{cursor}
+    }
+}

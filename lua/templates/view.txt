@@ -1,0 +1,16 @@
+//
+//  {filename}.swift
+//
+//
+//  Created by Anton Nikitenko on {date}.
+//
+
+import SwiftUI
+
+struct {filename}: View {
+    init() {}
+
+    var body: some View {
+	{cursor}
+    }
+}

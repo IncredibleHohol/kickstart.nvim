@@ -1,0 +1,8 @@
+//
+//  {filename}.swift
+//
+//
+//  Created by Anton Nikitenko on {date}.
+//
+
+import Foundation

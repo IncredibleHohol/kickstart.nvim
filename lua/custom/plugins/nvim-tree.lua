@@ -2,36 +2,44 @@ return {
   'nvim-tree/nvim-tree.lua',
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   config = function()
-    local nvimtree = require 'nvim-tree'
+    local nvimtree = require("nvim-tree")
 
     -- recommended settings from nvim-tree documentation
     vim.g.loaded_netrw = 1
     vim.g.loaded_netrwPlugin = 1
+    vim.opt.termguicolors = true
 
     -- change color for arrows in tree to light blue
-    vim.cmd [[ highlight NvimTreeIndentMarker guifg=#3FC5FF ]]
+    --vim.cmd [[
+    --highlight NvimTreeIndentMarker guifg=#3FC5FF
+    --highlight NvimTreeOpenedHL guifg=#3FC5FF
+    --]]
 
     -- configure nvim-tree
     nvimtree.setup {
+      hijack_cursor = true,
       open_on_tab = true,
       notify = {
         threshold = vim.log.levels.WARN,
       },
       view = {
         width = 40,
-        relativenumber = true,
+        number = true,
+        relativenumber = false,
+        side = "right",
       },
       -- change folder arrow icons
       renderer = {
+        group_empty = true,
         indent_markers = {
           enable = true,
         },
         icons = {
           glyphs = {
-            folder = {
-              arrow_closed = '', -- arrow when folder is closed
-              arrow_open = '', -- arrow when folder is open
-            },
+            --folder = {
+            --arrow_closed = '', -- arrow when folder is closed
+            --arrow_open = '', -- arrow when folder is open
+            --},
           },
         },
       },
