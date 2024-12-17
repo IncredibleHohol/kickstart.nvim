@@ -1,6 +1,9 @@
 return {
   "nvim-lualine/lualine.nvim",
-  dependencies = { "nvim-tree/nvim-web-devicons" },
+  dependencies = {
+    "nvim-tree/nvim-web-devicons",
+    "AndreM222/copilot-lualine"
+  },
   config = function()
     local lualine = require("lualine")
 
@@ -29,12 +32,17 @@ return {
         },
         disabled_buftypes = { "quickfix", "prompt" },
         component_separators = "",
+        --component_separators = { left = '', right = '' },
         section_separators = { left = "", right = "" },
       },
       sections = {
         lualine_a = {
           -- { "mode" },
-          { "filename" },
+          {
+            "filename",
+            path = 1,
+            shorting_target = 40
+          },
         },
         lualine_b = {
           { "diagnostics" },
@@ -53,6 +61,7 @@ return {
         },
         lualine_y = {
           { "branch" },
+          { "copilot" }
         },
         lualine_z = {
           { "location" },

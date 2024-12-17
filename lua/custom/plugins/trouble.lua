@@ -1,5 +1,6 @@
 return {
   "folke/trouble.nvim",
+  version = "2.10.0",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   event = { "BufReadPre", "BufNewFile" },
   keys = {
