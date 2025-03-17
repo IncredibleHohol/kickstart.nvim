@@ -191,11 +191,10 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 vim.keymap.set('n', '<leader>dl', '<CR>:lua require("dapui").toggle()<CR>', { silent = true, desc = 'Toggle logs' })
-vim.keymap.set('n', '<leader>dL', '<CR>:lua require("xcodebuild.integrations.dap").clear_console()<CR>',
-  { silent = true, desc = 'Clear logs' })
+vim.keymap.set('n', '<leader>dL', '<CR>:lua require("xcodebuild.integrations.dap").clear_console()<CR>', { silent = true, desc = 'Clear logs' })
 vim.env.XBS_FEAT_NEWFILE = 1
 
-require("templates.command")
+require 'templates.command'
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -278,7 +277,7 @@ require('lazy').setup({
   -- after the plugin has been loaded:
   --  config = function() ... end
 
-  {                     -- Useful plugin to show you pending keybinds.
+  { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     config = function() -- This is the function that runs, AFTER loading
@@ -326,7 +325,7 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons',            enabled = vim.g.have_nerd_font },
+      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -360,7 +359,7 @@ require('lazy').setup({
         --   },
         -- },
         -- pickers = {}
-        ensure_installed = { "swift" },
+        ensure_installed = { 'swift' },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -423,7 +422,7 @@ require('lazy').setup({
       },
     },
   },
-  { 'Bilal2453/luvit-meta',     lazy = true },
+  { 'Bilal2453/luvit-meta', lazy = true },
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -435,11 +434,11 @@ require('lazy').setup({
 
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim',       opts = {} },
+      { 'j-hui/fidget.nvim', opts = {} },
 
       -- Allows extra capabilities provided by nvim-cmp
       'hrsh7th/cmp-nvim-lsp',
-      { "antosha417/nvim-lsp-file-operations", config = true },
+      { 'antosha417/nvim-lsp-file-operations', config = true },
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -568,8 +567,19 @@ require('lazy').setup({
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+      require('mason').setup()
+      local mason_lspconfig = require 'mason-lspconfig'
+      mason_lspconfig.setup {
+        ensure_installed = {
+          'pyright',
+        },
+      }
+      require('lspconfig').pyright.setup {
+        capabilities = capabilities,
+      }
+
       require('lspconfig')['sourcekit'].setup {
-        cmd = { vim.fn.trim(vim.fn.system("xcrun -f sourcekit-lsp")) },
+        cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
         capabilities = capabilities,
         on_attach = function(_, _) end,
         on_init = function(client)
@@ -645,10 +655,10 @@ require('lazy').setup({
         },
       }
 
-      local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
+      local signs = { Error = ' ', Warn = ' ', Hint = '󰠠 ', Info = ' ' }
       for type, icon in pairs(signs) do
-        local hl = "DiagnosticSign" .. type
-        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
+        local hl = 'DiagnosticSign' .. type
+        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = '' })
       end
     end,
   },
@@ -681,26 +691,38 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        swift = { 'swiftformat' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
-    },
-    config = function()
-      local conform = require 'conform'
-
-      conform.setup {
-        formatters_by_ft = {
-          swift = { 'swiftformat' },
+      formatters = {
+        stylua = {
+          prepend_args = {
+            '--indent-type',
+            'Spaces',
+            '--indent-width',
+            '4',
+          },
         },
-        format_on_save = function()
-          return { timeout_ms = 500, lsp_fallback = true }
-        end,
-        log_level = vim.log.levels.ERROR,
-      }
-    end,
+      },
+      log_level = vim.log.levels.ERROR,
+    },
+    -- config = function()
+    --   local conform = require 'conform'
+    --
+    --   conform.setup {
+    --     formatters_by_ft = {
+    --       swift = { 'swiftformat' },
+    --     },
+    --     format_on_save = function()
+    --       return { timeout_ms = 500, lsp_fallback = true }
+    --     end,
+    --     log_level = vim.log.levels.ERROR,
+    --   }
+    -- end,
   },
 
   { -- Autocompletion
@@ -708,7 +730,7 @@ require('lazy').setup({
     event = 'InsertEnter',
     dependencies = {
       'hrsh7th/cmp-buffer', -- source for text in buffer
-      'hrsh7th/cmp-path',   -- source for file system paths
+      'hrsh7th/cmp-path', -- source for file system paths
       -- Snippet Engine & its associated nvim-cmp source
       {
         'L3MON4D3/LuaSnip',
@@ -733,9 +755,9 @@ require('lazy').setup({
           -- },
         },
       },
-      'saadparwaiz1/cmp_luasnip',     -- for autocompletion
+      'saadparwaiz1/cmp_luasnip', -- for autocompletion
       'rafamadriz/friendly-snippets', -- useful snippets
-      'onsails/lspkind.nvim',         -- vs-code like pictograms
+      'onsails/lspkind.nvim', -- vs-code like pictograms
 
       -- Adds other completion capabilities.
       --  nvim-cmp does not ship with all sources by default. They are split
@@ -745,12 +767,12 @@ require('lazy').setup({
     },
     config = function()
       -- See `:help cmp`
-      local cmp = require("cmp")
-      local luasnip = require("luasnip")
-      local lspkind = require("lspkind")
+      local cmp = require 'cmp'
+      local luasnip = require 'luasnip'
+      local lspkind = require 'lspkind'
 
       -- loads vscode style snippets from installed plugins (e.g. friendly-snippets)
-      require("luasnip.loaders.from_vscode").lazy_load()
+      require('luasnip.loaders.from_vscode').lazy_load()
 
       luasnip.config.setup {}
 
@@ -814,7 +836,7 @@ require('lazy').setup({
           -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
-        sources = cmp.config.sources({
+        sources = cmp.config.sources {
           -- { name = "copilot", group_index = 2 },
           {
             name = 'lazydev',
@@ -824,14 +846,14 @@ require('lazy').setup({
           { name = 'nvim_lsp' },
           { name = 'luasnip' },
           { name = 'path' },
-          { name = 'buffer' }
-        }),
+          { name = 'buffer' },
+        },
         -- configure lspkind for vs-code like pictograms in completion menu
         formatting = {
-          format = lspkind.cmp_format({
+          format = lspkind.cmp_format {
             maxwidth = 50,
-            ellipsis_char = "...",
-          })
+            ellipsis_char = '...',
+          },
         },
       }
     end,
@@ -866,25 +888,25 @@ require('lazy').setup({
 
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
-    event = { "BufReadPre", "BufNewFile" },
+    event = { 'BufReadPre', 'BufNewFile' },
     build = ':TSUpdate',
     dependencies = {
-      "windwp/nvim-ts-autotag",
+      'windwp/nvim-ts-autotag',
     },
     config = function()
-      local treesitter = require("nvim-treesitter.configs")
+      local treesitter = require 'nvim-treesitter.configs'
 
-      treesitter.setup({
+      treesitter.setup {
         incremental_selection = {
           enable = false,
           keymaps = {
-            scope_incremental = "a",
-            node_decremental = "z",
+            scope_incremental = 'a',
+            node_decremental = 'z',
           },
         },
         highlight = {
           enable = true,
-          additional_vim_regex_highlighting = { 'ruby' }
+          additional_vim_regex_highlighting = { 'ruby' },
         },
         indent = { enable = true, disable = { 'ruby' } },
         autotag = { enable = true },
@@ -903,10 +925,10 @@ require('lazy').setup({
           'json',
           'yaml',
           'gitignore',
-          'swift'
+          'swift',
         },
         auto_install = true,
-      })
+      }
     end,
   },
 
