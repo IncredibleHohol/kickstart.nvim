@@ -1,0 +1,20 @@
+return {
+    'Exafunction/windsurf.vim',
+    event = 'BufEnter',
+    config = function()
+        vim.g.codeium_no_map_tab = true
+
+        vim.keymap.set('i', '<M-l>', vim.fn['codeium#Accept'], { expr = true, silent = true })
+        -- vim.keymap.set('i', '<M-[>', vim.fn['codeium#CycleCompletions'](-1), { expr = true, silent = true })
+        -- vim.keymap.set('i', '<M-]>', vim.fn['codeium#CycleCompletions'](1), { expr = true, silent = true })
+        vim.keymap.set('i', '<C-]>', vim.fn['codeium#Clear'], { expr = true, silent = true })
+    end,
+}
+-- {
+--       accept = "<M-l>",
+--       accept_word = false,
+--       accept_line = false,
+--       next = "<M-]>",
+--       prev = "<M-[>",
+--       dismiss = "<C-]>",
+--     }
