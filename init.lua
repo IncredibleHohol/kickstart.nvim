@@ -567,26 +567,6 @@ require('lazy').setup({
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
-            require('mason').setup()
-            local mason_lspconfig = require 'mason-lspconfig'
-            mason_lspconfig.setup {
-                ensure_installed = {
-                    'pyright',
-                },
-            }
-            require('lspconfig').pyright.setup {
-                capabilities = capabilities,
-            }
-
-            require('lspconfig')['sourcekit'].setup {
-                cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
-                capabilities = capabilities,
-                on_attach = function(_, _) end,
-                on_init = function(client)
-                    client.offset_encoding = 'utf-8'
-                end,
-            }
-
             -- Enable the following language servers
             --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
             --
@@ -626,12 +606,7 @@ require('lazy').setup({
                 },
             }
 
-            -- Ensure the servers and tools above are installed
-            --  To check the current status of installed tools and/or manually install
-            --  other tools, you can run
-            --    :Mason
-            --
-            --  You can press `g?` for help in this menu.
+            -- Setup mason first
             require('mason').setup()
 
             -- You can add other tools here that you want Mason to install
@@ -642,8 +617,12 @@ require('lazy').setup({
             })
             require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+            -- Setup mason-lspconfig with AUTOMATIC_ENABLE = FALSE to fix the breaking changes
             require('mason-lspconfig').setup {
+                ensure_installed = vim.tbl_keys(servers),
+                automatic_enable = false, -- CRITICAL: This fixes the mason v2 breaking changes
                 handlers = {
+                    -- Default handler for servers
                     function(server_name)
                         local server = servers[server_name] or {}
                         -- This handles overriding only values explicitly passed
@@ -655,6 +634,22 @@ require('lazy').setup({
                 },
             }
 
+            -- Manually setup each server to ensure they work properly with Mason v2
+            for server_name, config in pairs(servers) do
+                config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+                require('lspconfig')[server_name].setup(config)
+            end
+
+            -- Setup sourcekit separately (not managed by Mason, comes with Xcode)
+            require('lspconfig').sourcekit.setup {
+                cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
+                capabilities = capabilities,
+                on_init = function(client)
+                    client.offset_encoding = 'utf-8'
+                end,
+            }
+
+            -- Setup diagnostic signs
             local signs = { Error = ' ', Warn = ' ', Hint = '󰠠 ', Info = ' ' }
             for type, icon in pairs(signs) do
                 local hl = 'DiagnosticSign' .. type
