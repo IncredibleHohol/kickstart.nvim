@@ -7,7 +7,7 @@ return {
     require("mini.comment").setup({
       options = {
         custom_commentstring = function()
-          return vim.api.nvim_buf_get_option(0, "ft") == "swift" and "// %s"
+          return vim.bo[0].filetype == "swift" and "// %s"
         end,
       },
       mappings = {

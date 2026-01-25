@@ -1,41 +1,37 @@
 return {
   "folke/trouble.nvim",
-  version = "2.10.0",
   dependencies = { "nvim-tree/nvim-web-devicons" },
+  cmd = "Trouble",
   event = { "BufReadPre", "BufNewFile" },
   keys = {
-    { "<leader>tt", "<cmd>TroubleToggle quickfix<cr>", { desc = "Open a quickfix" } },
+    { "<leader>tt", "<cmd>Trouble quickfix toggle<cr>", desc = "Toggle quickfix" },
+    { "<leader>td", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics" },
+    { "<leader>tD", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer diagnostics" },
   },
+  opts = {
+    auto_close = false,
+    auto_open = false,
+    auto_preview = true,
+    focus = true,
+  },
+  config = function(_, opts)
+    local trouble = require("trouble")
+    trouble.setup(opts)
 
-  opts = {},
-  config = function()
-    require("trouble").setup({
-      auto_open = false,
-      auto_close = false,
-      auto_preview = true,
-      auto_jump = {},
-      mode = "quickfix",
-      severity = vim.diagnostic.severity.ERROR,
-      cycle_results = false,
-    })
-
+    -- xcodebuild integration (v3 API)
     vim.api.nvim_create_autocmd("User", {
       pattern = { "XcodebuildBuildFinished", "XcodebuildTestsFinished" },
       callback = function(event)
-        if event.data.cancelled then
-          return
-        end
-
+        if event.data.cancelled then return end
         if event.data.success then
-          require("trouble").close()
+          trouble.close()
         elseif not event.data.failedCount or event.data.failedCount > 0 then
           if next(vim.fn.getqflist()) then
-            require("trouble").open({ focus = false })
+            trouble.open({ mode = "quickfix", focus = false })
           else
-            require("trouble").close()
+            trouble.close()
           end
-
-          require("trouble").refresh()
+          trouble.refresh()
         end
       end,
     })
