@@ -666,7 +666,7 @@ require('lazy').setup({
             {
                 '<leader>f',
                 function()
-                    require('conform').format { async = true, lsp_fallback = true }
+                    require('conform').format { async = true, lsp_format = 'fallback' }
                 end,
                 mode = '',
                 desc = '[F]ormat buffer',
@@ -675,13 +675,14 @@ require('lazy').setup({
         opts = {
             notify_on_error = false,
             format_on_save = function(bufnr)
-                -- Disable "format_on_save lsp_fallback" for languages that don't
+                -- Disable "format_on_save lsp_format" for languages that don't
                 -- have a well standardized coding style. You can add additional
                 -- languages here or re-enable it for the disabled ones.
                 local disable_filetypes = { c = true, cpp = true }
+                local lsp_format_opt = disable_filetypes[vim.bo[bufnr].filetype] and 'never' or 'fallback'
                 return {
                     timeout_ms = 500,
-                    lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
+                    lsp_format = lsp_format_opt,
                 }
             end,
             formatters_by_ft = {
@@ -888,42 +889,39 @@ require('lazy').setup({
         dependencies = {
             'windwp/nvim-ts-autotag',
         },
-        config = function()
-            local treesitter = require 'nvim-treesitter.configs'
+        main = 'nvim-treesitter',
+        opts = {
+            ensure_installed = {
+                'bash',
+                'c',
+                'diff',
+                'html',
+                'lua',
+                'luadoc',
+                'markdown',
+                'markdown_inline',
+                'query',
+                'vim',
+                'vimdoc',
+                'json',
+                'yaml',
+                'gitignore',
+                'swift',
+            },
+            auto_install = true,
+        },
+        config = function(_, opts)
+            require('nvim-treesitter').setup(opts)
 
-            treesitter.setup {
-                incremental_selection = {
-                    enable = false,
-                    keymaps = {
-                        scope_incremental = 'a',
-                        node_decremental = 'z',
-                    },
-                },
-                highlight = {
-                    enable = true,
-                    additional_vim_regex_highlighting = { 'ruby' },
-                },
-                indent = { enable = true, disable = { 'ruby' } },
-                autotag = { enable = true },
-                ensure_installed = {
-                    'bash',
-                    'c',
-                    'diff',
-                    'html',
-                    'lua',
-                    'luadoc',
-                    'markdown',
-                    'markdown_inline',
-                    'query',
-                    'vim',
-                    'vimdoc',
-                    'json',
-                    'yaml',
-                    'gitignore',
-                    'swift',
-                },
-                auto_install = true,
-            }
+            -- Enable highlighting (now uses vim.treesitter)
+            vim.api.nvim_create_autocmd('FileType', {
+                callback = function()
+                    pcall(vim.treesitter.start)
+                end,
+            })
+
+            -- Setup autotag separately (it has its own setup now)
+            require('nvim-ts-autotag').setup()
         end,
     },
 

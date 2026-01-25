@@ -37,9 +37,9 @@ return {
   config = function()
     local xcodebuild = require("xcodebuild.integrations.dap")
 
-    -- TODO: make sure to set path to your codelldb
-    local codelldbPath = os.getenv("HOME") .. "/tools/codelldb-aarch64-darwin/extension/adapter/codelldb"
-    xcodebuild.setup(codelldbPath)
+    -- xcodebuild.nvim now uses native lldb (bundled with Xcode 16+) by default
+    -- codelldb is no longer required
+    xcodebuild.setup() -- optional: pass `true` to auto-load saved breakpoints
 
     local define = vim.fn.sign_define
     define("DapBreakpoint", { text = "", texthl = "DiagnosticError", linehl = "", numhl = "" })
