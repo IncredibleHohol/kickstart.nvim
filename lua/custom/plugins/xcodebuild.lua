@@ -34,6 +34,9 @@ return {
                     if line:find 'TCP Conn' then
                         return false
                     end
+                    if line:find 'Crashlytics' then
+                        return false
+                    end
                     return true
                 end,
                 -- Colorize log lines by type
