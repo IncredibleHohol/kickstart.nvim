@@ -4,7 +4,12 @@ return {
         'nvim-lua/plenary.nvim', -- Required for git operations
     },
     config = function()
-        require('claude-code').setup()
+        require('claude-code').setup {
+            window = {
+                split_ratio = 0.4,
+                position = 'botright',
+            },
+        }
         vim.keymap.set('n', '<leader>cc', '<cmd>ClaudeCode<CR>', { desc = 'Toggle Claude Code' })
     end,
 }
