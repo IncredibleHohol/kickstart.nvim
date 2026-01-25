@@ -157,6 +157,9 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- Session options (includes localoptions for proper filetype/highlighting after restore)
+vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions'
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -525,7 +528,7 @@ require('lazy').setup({
                     --
                     -- When you move your cursor, the highlights will be cleared (the second autocommand).
                     local client = vim.lsp.get_client_by_id(event.data.client_id)
-                    if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
+                    if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
                         local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
                         vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
                             buffer = event.buf,
@@ -552,7 +555,7 @@ require('lazy').setup({
                     -- code, if the language server you are using supports them
                     --
                     -- This may be unwanted, since they displace some of your code
-                    if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+                    if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
                         map('<leader>th', function()
                             vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
                         end, '[T]oggle Inlay [H]ints')
@@ -621,40 +624,36 @@ require('lazy').setup({
             require('mason-lspconfig').setup {
                 ensure_installed = vim.tbl_keys(servers),
                 automatic_enable = false, -- CRITICAL: This fixes the mason v2 breaking changes
-                handlers = {
-                    -- Default handler for servers
-                    function(server_name)
-                        local server = servers[server_name] or {}
-                        -- This handles overriding only values explicitly passed
-                        -- by the server configuration above. Useful when disabling
-                        -- certain features of an LSP (for example, turning off formatting for tsserver)
-                        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-                        require('lspconfig')[server_name].setup(server)
-                    end,
-                },
             }
 
-            -- Manually setup each server to ensure they work properly with Mason v2
+            -- Configure and enable each LSP server using the new vim.lsp.config API (Neovim 0.11+)
             for server_name, config in pairs(servers) do
                 config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
-                require('lspconfig')[server_name].setup(config)
+                vim.lsp.config(server_name, config)
+                vim.lsp.enable(server_name)
             end
 
             -- Setup sourcekit separately (not managed by Mason, comes with Xcode)
-            require('lspconfig').sourcekit.setup {
+            vim.lsp.config('sourcekit', {
                 cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
                 capabilities = capabilities,
                 on_init = function(client)
                     client.offset_encoding = 'utf-8'
                 end,
-            }
+            })
+            vim.lsp.enable('sourcekit')
 
-            -- Setup diagnostic signs
-            local signs = { Error = ' ', Warn = ' ', Hint = '󰠠 ', Info = ' ' }
-            for type, icon in pairs(signs) do
-                local hl = 'DiagnosticSign' .. type
-                vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = '' })
-            end
+            -- Setup diagnostic signs using the new API (vim.diagnostic.config)
+            vim.diagnostic.config {
+                signs = {
+                    text = {
+                        [vim.diagnostic.severity.ERROR] = ' ',
+                        [vim.diagnostic.severity.WARN] = ' ',
+                        [vim.diagnostic.severity.HINT] = '󰺠 ',
+                        [vim.diagnostic.severity.INFO] = ' ',
+                    },
+                },
+            }
         end,
     },
 
