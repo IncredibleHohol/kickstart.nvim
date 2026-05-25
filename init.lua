@@ -197,6 +197,31 @@ vim.keymap.set('n', '<leader>dl', '<CR>:lua require("dapui").toggle()<CR>', { si
 vim.keymap.set('n', '<leader>dL', '<CR>:lua require("xcodebuild.integrations.dap").clear_console()<CR>', { silent = true, desc = 'Clear logs' })
 vim.env.XBS_FEAT_NEWFILE = 1
 
+-- Copy file path keymaps
+vim.keymap.set('n', '<leader>cc', function()
+    local path = vim.fn.expand '%:p'
+    vim.fn.setreg('+', path)
+    vim.notify('Copied: ' .. path)
+end, { desc = '[C]opy absolute path' })
+
+vim.keymap.set('n', '<leader>cr', function()
+    local path = vim.fn.expand '%'
+    vim.fn.setreg('+', path)
+    vim.notify('Copied: ' .. path)
+end, { desc = '[C]opy [R]elative path' })
+
+vim.keymap.set('n', '<leader>cf', function()
+    local path = vim.fn.expand '%:t'
+    vim.fn.setreg('+', path)
+    vim.notify('Copied: ' .. path)
+end, { desc = '[C]opy [F]ilename' })
+
+vim.keymap.set('n', '<leader>cd', function()
+    local path = vim.fn.expand '%:p:h'
+    vim.fn.setreg('+', path)
+    vim.notify('Copied: ' .. path)
+end, { desc = '[C]opy [D]irectory path' })
+
 require 'templates.command'
 
 -- [[ Basic Autocommands ]]
@@ -309,7 +334,6 @@ require('lazy').setup({
     { -- Fuzzy Finder (files, lsp, etc)
         'nvim-telescope/telescope.nvim',
         event = 'VimEnter',
-        branch = '0.1.x',
         dependencies = {
             'nvim-lua/plenary.nvim',
             { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -641,7 +665,7 @@ require('lazy').setup({
                     client.offset_encoding = 'utf-8'
                 end,
             })
-            vim.lsp.enable('sourcekit')
+            vim.lsp.enable 'sourcekit'
 
             -- Setup diagnostic signs using the new API (vim.diagnostic.config)
             vim.diagnostic.config {
