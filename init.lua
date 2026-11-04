@@ -197,30 +197,29 @@ vim.keymap.set('n', '<leader>dl', '<CR>:lua require("dapui").toggle()<CR>', { si
 vim.keymap.set('n', '<leader>dL', '<CR>:lua require("xcodebuild.integrations.dap").clear_console()<CR>', { silent = true, desc = 'Clear logs' })
 vim.env.XBS_FEAT_NEWFILE = 1
 
--- Copy file path keymaps
-vim.keymap.set('n', '<leader>cc', function()
-    local path = vim.fn.expand '%:p'
-    vim.fn.setreg('+', path)
-    vim.notify('Copied: ' .. path)
-end, { desc = '[C]opy absolute path' })
+-- Copy file path keymaps; in visual mode with_lines appends the selected lines: path#L57-L60
+local function copy_path(modifier, with_lines)
+    return function()
+        local path = vim.fn.expand(modifier)
+        if vim.fn.mode():match '[vV\22]' then
+            if with_lines then
+                local first, last = vim.fn.line 'v', vim.fn.line '.'
+                if first > last then
+                    first, last = last, first
+                end
+                path = path .. '#L' .. first .. '-L' .. last
+            end
+            vim.api.nvim_feedkeys(vim.keycode '<Esc>', 'n', false)
+        end
+        vim.fn.setreg('+', path)
+        vim.notify('Copied: ' .. path)
+    end
+end
 
-vim.keymap.set('n', '<leader>cr', function()
-    local path = vim.fn.expand '%'
-    vim.fn.setreg('+', path)
-    vim.notify('Copied: ' .. path)
-end, { desc = '[C]opy [R]elative path' })
-
-vim.keymap.set('n', '<leader>cf', function()
-    local path = vim.fn.expand '%:t'
-    vim.fn.setreg('+', path)
-    vim.notify('Copied: ' .. path)
-end, { desc = '[C]opy [F]ilename' })
-
-vim.keymap.set('n', '<leader>cd', function()
-    local path = vim.fn.expand '%:p:h'
-    vim.fn.setreg('+', path)
-    vim.notify('Copied: ' .. path)
-end, { desc = '[C]opy [D]irectory path' })
+vim.keymap.set({ 'n', 'x' }, '<leader>cc', copy_path('%:p', true), { desc = '[C]opy absolute path' })
+vim.keymap.set({ 'n', 'x' }, '<leader>cp', copy_path('%', true), { desc = '[C]opy relative [P]ath' })
+vim.keymap.set({ 'n', 'x' }, '<leader>cf', copy_path('%:t', true), { desc = '[C]opy [F]ilename' })
+vim.keymap.set({ 'n', 'x' }, '<leader>cd', copy_path '%:p:h', { desc = '[C]opy [D]irectory path' })
 
 require 'templates.command'
 
