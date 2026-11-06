@@ -33,6 +33,8 @@ return {
         map('n', '<A-p>', '<Cmd>BufferPin<CR>', opts)
         -- Close buffer
         map('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
+        map_key('n', '<Space>bc', '<Cmd>BufferClose<CR>', '[C]lose current buffer')
+        map_key('n', '<Space>bo', '<Cmd>BufferCloseAllButCurrentOrPinned<CR>', 'Close [o]ther buffers, except pinned')
         -- Sort automatically by...
         map_key('n', '<Space>bb', '<Cmd>BufferOrderByBufferNumber<CR>', 'Order buffers by num[b]er')
         map_key('n', '<Space>bn', '<Cmd>BufferOrderByName<CR>', 'Order buffers by [n]ame')
