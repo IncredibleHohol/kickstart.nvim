@@ -23,7 +23,7 @@ return {
         threshold = vim.log.levels.WARN,
       },
       view = {
-        width = 40,
+        width = 50,
         number = true,
         relativenumber = false,
         side = "right",
