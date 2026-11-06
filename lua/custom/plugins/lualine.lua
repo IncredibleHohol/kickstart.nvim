@@ -6,6 +6,7 @@ return {
     },
     config = function()
         local lualine = require 'lualine'
+        local android_ok, android_lualine = pcall(require, 'android.integrations.lualine')
 
         local function xcodebuild_device()
             if vim.g.xcodebuild_platform == 'macOS' then
@@ -58,6 +59,10 @@ return {
                     { "' ' .. vim.g.xcodebuild_last_status", color = { fg = '#a6e3a1' } },
                     -- { "'󰙨 ' .. vim.g.xcodebuild_test_plan", color = { fg = "#a6e3a1", bg = "#161622" } },
                     { xcodebuild_device, color = { fg = '#f9e2af', bg = '#161622' } },
+                    -- android.nvim
+                    android_ok and { android_lualine.status, color = android_lualine.status_color } or nil,
+                    android_ok and { android_lualine.device, color = { fg = '#a6e3a1' } } or nil,
+                    android_ok and { android_lualine.variant, color = { fg = '#f9e2af' } } or nil,
                 },
                 lualine_y = {
                     { 'branch' },
