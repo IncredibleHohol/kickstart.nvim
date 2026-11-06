@@ -4,11 +4,7 @@ return {
     -- config = true,
     opts = {
         terminal = {
-            snacks_win_opts = {
-                position = 'bottom',
-                height = 0.4, -- 40% of screen height
-                width = 1.0, -- full width
-            },
+            provider = require('custom.term_panel').claude_provider,
         },
     },
     keys = {
