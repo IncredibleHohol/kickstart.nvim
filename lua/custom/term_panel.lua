@@ -1,11 +1,23 @@
--- One split at the bottom for terminals. It shows one terminal at a time and a winbar tab for each terminal.
+-- One split at the bottom of a tabpage for terminals. It shows one terminal at a time and a winbar tab for each terminal.
 -- The terminals keep running when they are not shown. A tab closes when its process exits.
 local M = {}
 
 local tabs = {} -- { buf = number, name = string }, in tab order
-local win -- the panel window
 local last -- the buffer that the panel showed last
 local claude -- the buffer of the Claude Code tab
+
+-- Options of the panel window. A new window copies the options of the current window, and Diffview sets some of them.
+-- A number, sign or fold column makes the terminal narrower. This breaks programs that fill the screen.
+local win_opts = {
+  winfixheight = true,
+  number = false,
+  relativenumber = false,
+  signcolumn = 'no',
+  foldcolumn = '0',
+  diff = false,
+  scrollbind = false,
+  cursorbind = false,
+}
 
 local function index_of(buf)
   for i, tab in ipairs(tabs) do
@@ -15,39 +27,61 @@ local function index_of(buf)
   end
 end
 
-local function is_open()
-  return win and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_tabpage(win) == vim.api.nvim_get_current_tabpage()
+--- Returns the panel windows of all tabpages.
+local function panel_wins()
+  return vim.tbl_filter(function(w)
+    return vim.w[w].term_panel
+  end, vim.api.nvim_list_wins())
+end
+
+--- Returns the panel window of the current tabpage, or nil.
+local function panel()
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.w[w].term_panel then
+      return w
+    end
+  end
 end
 
 local function shown()
-  return is_open() and vim.api.nvim_win_get_buf(win)
+  local w = panel()
+  return w and vim.api.nvim_win_get_buf(w)
 end
 
 local function render()
-  if not is_open() then
-    return
+  for _, w in ipairs(panel_wins()) do
+    local current = vim.api.nvim_win_get_buf(w)
+    local parts = {}
+    for i, tab in ipairs(tabs) do
+      parts[#parts + 1] = ('%s %d:%s '):format(tab.buf == current and '%#TabLineSel#' or '%#TabLine#', i, tab.name)
+    end
+    vim.wo[w].winbar = table.concat(parts) .. '%#TabLineFill#'
   end
-  local parts = {}
-  for i, tab in ipairs(tabs) do
-    parts[#parts + 1] = ('%s %d:%s '):format(tab.buf == shown() and '%#TabLineSel#' or '%#TabLine#', i, tab.name)
-  end
-  vim.wo[win].winbar = table.concat(parts) .. '%#TabLineFill#'
 end
 
 local function enter()
-  vim.api.nvim_set_current_win(win)
+  vim.api.nvim_set_current_win(panel())
   vim.cmd.startinsert()
+end
+
+local function set_win_opts(w)
+  for name, value in pairs(win_opts) do
+    -- vim.wo[w] also sets the global value when w is the current window.
+    vim.api.nvim_set_option_value(name, value, { scope = 'local', win = w })
+  end
 end
 
 --- Shows the terminal in the panel. Opens the panel when it is closed.
 local function show(buf, focus)
-  if is_open() then
-    vim.api.nvim_win_set_buf(win, buf)
+  local w = panel()
+  if w then
+    vim.api.nvim_win_set_buf(w, buf)
   else
-    win = vim.api.nvim_open_win(buf, false, { split = 'below', win = -1, height = math.floor(vim.o.lines * 0.4) })
+    w = vim.api.nvim_open_win(buf, false, { split = 'below', win = -1, height = math.floor(vim.o.lines * 0.4) })
+    vim.w[w].term_panel = true
   end
-  -- A buffer switch can restore the window options of an older window, so set them again.
-  vim.wo[win].winfixheight = true
+  -- A new window copies the options of the current window. A buffer switch can restore the options of an older window. So set them again.
+  set_win_opts(w)
   last = buf
   render()
   if focus then
@@ -56,8 +90,9 @@ local function show(buf, focus)
 end
 
 local function hide()
-  if is_open() then
-    vim.api.nvim_win_close(win, false)
+  local w = panel()
+  if w then
+    vim.api.nvim_win_close(w, false)
   end
 end
 
@@ -75,11 +110,18 @@ local function remove(buf)
   if last == buf then
     last = next and next.buf
   end
-  if shown() == buf then
-    if next then
-      show(next.buf, vim.api.nvim_get_current_win() == win)
-    else
-      hide()
+  for _, w in ipairs(panel_wins()) do
+    if vim.api.nvim_win_get_buf(w) == buf then
+      if next then
+        local focused = w == vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(w, next.buf)
+        set_win_opts(w)
+        if focused then
+          enter()
+        end
+      else
+        vim.api.nvim_win_close(w, false)
+      end
     end
   end
   if vim.api.nvim_buf_is_valid(buf) then
@@ -132,7 +174,7 @@ end
 
 --- Hides the panel when it is open. Otherwise shows the last tab, or starts omp when there are no tabs.
 function M.toggle()
-  if is_open() then
+  if panel() then
     hide()
   elseif last then
     show(last, true)
@@ -179,7 +221,7 @@ M.claude_provider = {
     end
   end,
   focus_toggle = function(cmd, env, config)
-    if claude and shown() == claude and vim.api.nvim_get_current_win() == win then
+    if claude and shown() == claude and vim.api.nvim_get_current_win() == panel() then
       hide()
     else
       M.claude_provider.open(cmd, env, config, true)
