@@ -183,6 +183,13 @@ function M.toggle()
   end
 end
 
+--- Closes the panel windows of all tabpages. The terminals keep running.
+function M.close_all()
+  for _, w in ipairs(panel_wins()) do
+    vim.api.nvim_win_close(w, false)
+  end
+end
+
 --- Shows the tab that is step tabs after the shown tab. It wraps around.
 function M.cycle(step)
   local i = index_of(shown())
