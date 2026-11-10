@@ -2,7 +2,7 @@
 -- The terminals keep running when they are not shown. A tab closes when its process exits.
 local M = {}
 
-local tabs = {} -- { buf = number, name = string }, in tab order
+local tabs = {} -- { buf = number, name = string, title = string? }, in tab order
 local last -- the buffer that the panel showed last
 local claude -- the buffer of the Claude Code tab
 
@@ -53,7 +53,13 @@ local function render()
     local current = vim.api.nvim_win_get_buf(w)
     local parts = {}
     for i, tab in ipairs(tabs) do
-      parts[#parts + 1] = ('%s %d:%s '):format(tab.buf == current and '%#TabLineSel#' or '%#TabLine#', i, tab.name)
+      local label = tab.name
+      if tab.title then
+        -- Long titles get a limit, so that many tabs fit in the winbar.
+        local title = vim.fn.strcharlen(tab.title) > 100 and vim.fn.strcharpart(tab.title, 0, 99) .. '…' or tab.title
+        label = title:gsub('%%', '%%%%')
+      end
+      parts[#parts + 1] = ('%s %d:%s '):format(tab.buf == current and '%#TabLineSel#' or '%#TabLine#', i, label)
     end
     vim.wo[w].winbar = table.concat(parts) .. '%#TabLineFill#'
   end
@@ -136,6 +142,18 @@ local function start(name, cmd, opts, focus)
   vim.bo[buf].bufhidden = 'hide'
   tabs[#tabs + 1] = { buf = buf, name = name }
   show(buf, false)
+  -- The program sets its terminal title with an OSC 0 or OSC 2 sequence.
+  vim.api.nvim_create_autocmd('TermRequest', {
+    buffer = buf,
+    callback = function(ev)
+      local title = ev.data.sequence:match '^\27%][02];(.+)'
+      local i = index_of(buf)
+      if title and i then
+        tabs[i].title = title
+        render()
+      end
+    end,
+  })
   opts.term = true
   opts.on_exit = function()
     vim.schedule(function()
