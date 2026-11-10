@@ -11,6 +11,7 @@ return {
       cli = 'claude',
       model = 'opus',
       effort = 'xhigh',
+      grammar_model = 'haiku',
       moves = true,
       reviewers = {
         'claude:opus#xhigh',
