@@ -185,6 +185,70 @@ local function start(name, cmd, opts, focus)
   return buf
 end
 
+--- Reads the zsh history. Returns the commands, newest first, without duplicates.
+local function zsh_history()
+  local entries, entry = {}, nil
+  for _, line in ipairs(vim.fn.readfile(vim.fn.expand '~/.zsh_history')) do
+    -- zsh writes some bytes of non-ASCII characters as 0x83 and then the byte XOR 0x20.
+    line = line:gsub('\131(.)', function(c)
+      return string.char(bit.bxor(c:byte(), 32))
+    end)
+    entry = entry and entry .. '\n' .. line or line
+    -- A line that ends with a backslash continues on the next line.
+    if entry:sub(-1) == '\\' then
+      entry = entry:sub(1, -2)
+    else
+      entries[#entries + 1] = entry
+      entry = nil
+    end
+  end
+  local commands, seen = {}, {}
+  for i = #entries, 1, -1 do
+    if not seen[entries[i]] then
+      seen[entries[i]] = true
+      commands[#commands + 1] = entries[i]
+    end
+  end
+  return commands
+end
+
+--- Opens a Telescope picker with the zsh history. The selected command replaces the prompt line of the shell in buf.
+local function pick_history(buf)
+  local actions = require 'telescope.actions'
+  require('telescope.pickers')
+    .new({}, {
+      prompt_title = 'Shell history',
+      finder = require('telescope.finders').new_table {
+        results = zsh_history(),
+        entry_maker = function(command)
+          local line = command:gsub('\n', '↵')
+          return { value = command, display = line, ordinal = line }
+        end,
+      },
+      sorter = require('telescope.config').values.generic_sorter {},
+      attach_mappings = function(prompt_buf)
+        actions.select_default:replace(function()
+          local entry = require('telescope.actions.state').get_selected_entry()
+          actions.close(prompt_buf)
+          if entry then
+            -- Ctrl-X Ctrl-K clears all lines of the command. A bracketed paste keeps the newlines of a multi-line command from running it.
+            vim.api.nvim_chan_send(vim.bo[buf].channel, '\24\11\27[200~' .. entry.value .. '\27[201~')
+          end
+        end)
+        -- Go back to Terminal mode in the shell after the picker closes.
+        actions.close:enhance {
+          post = function()
+            vim.schedule(function()
+              show(buf, true)
+            end)
+          end,
+        }
+        return true
+      end,
+    })
+    :find()
+end
+
 --- Starts cmd (an argv list) in a new tab and focuses it.
 function M.new(name, cmd)
   start(name, cmd, {}, true)
@@ -204,13 +268,17 @@ local function find(name)
 end
 
 --- Shows the shell tab and focuses it. Starts the shell in a new tab when there is no shell tab, or when new is true.
+--- <C-r> in a new tab opens a Telescope picker with the zsh history.
 function M.shell(new)
   local existing = not new and find 'term'
   if existing then
     show(existing, true)
     return
   end
-  start('term', { vim.o.shell }, {}, true)
+  local buf = start('term', { vim.o.shell }, {}, true)
+  vim.keymap.set('t', '<C-r>', function()
+    pick_history(buf)
+  end, { buffer = buf, desc = 'Search shell history' })
 end
 
 --- Hides the panel when it is open. Otherwise shows the last tab, or starts omp when there are no tabs.
