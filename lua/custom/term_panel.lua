@@ -190,6 +190,29 @@ function M.new(name, cmd)
   start(name, cmd, {}, true)
 end
 
+--- Returns the buffer of a tab with this name, or nil. The shown tab wins over the other tabs.
+local function find(name)
+  local current = tabs[index_of(shown()) or 0]
+  if current and current.name == name then
+    return current.buf
+  end
+  for _, tab in ipairs(tabs) do
+    if tab.name == name then
+      return tab.buf
+    end
+  end
+end
+
+--- Shows the shell tab and focuses it. Starts the shell in a new tab when there is no shell tab, or when new is true.
+function M.shell(new)
+  local existing = not new and find 'term'
+  if existing then
+    show(existing, true)
+    return
+  end
+  start('term', { vim.o.shell }, {}, true)
+end
+
 --- Hides the panel when it is open. Otherwise shows the last tab, or starts omp when there are no tabs.
 function M.toggle()
   if panel() then

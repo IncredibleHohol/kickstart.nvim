@@ -20,7 +20,14 @@ return {
     {
       '<leader>at',
       function()
-        require('custom.term_panel').new('term', { vim.o.shell })
+        require('custom.term_panel').shell()
+      end,
+      desc = 'Terminal tab',
+    },
+    {
+      '<leader>aT',
+      function()
+        require('custom.term_panel').shell(true)
       end,
       desc = 'New terminal tab',
     },
