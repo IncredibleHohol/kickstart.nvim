@@ -47,6 +47,25 @@ local function show_image(_, winid)
   Snacks.image.buf.attach(buf, { src = side_path(file) })
 end
 
+-- Opens every side of the selected file (old and new) in Preview.app.
+local function open_in_preview()
+  local view = require('diffview.lib').get_current_view()
+  local entry = view and view:infer_cur_file()
+  if not entry then
+    return
+  end
+
+  local paths = {}
+  for _, file in ipairs(entry.layout:files()) do
+    if not file.nulled then
+      table.insert(paths, side_path(file))
+    end
+  end
+  vim.system(vim.list_extend({ 'open', '-a', 'Preview' }, paths))
+end
+
+local preview_keymap = { 'n', 'gp', open_in_preview, { desc = 'Open the file sides in Preview' } }
+
 return {
   'sindrets/diffview.nvim',
   keys = {
@@ -67,6 +86,11 @@ return {
     -- the file list on the right, as the review plugin and nvim-tree show it
     file_panel = {
       win_config = { position = 'right', width = 50 },
+    },
+    keymaps = {
+      view = { preview_keymap },
+      file_panel = { preview_keymap },
+      file_history_panel = { preview_keymap },
     },
     hooks = { diff_buf_win_enter = show_image },
   },
