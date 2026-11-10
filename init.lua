@@ -169,7 +169,7 @@ vim.opt.diffopt:append { 'inline:word', 'algorithm:histogram' }
 -- Terminal title: the working directory name and the git branch, e.g. "nvim (master)".
 -- The %( %) group hides the brackets when there is no branch.
 vim.opt.title = true
-vim.opt.titlestring = "%{fnamemodify(getcwd(), ':t')}%( (%{get(b:, 'gitsigns_head', '')})%)"
+vim.opt.titlestring = "%{fnamemodify(getcwd(), ':t')}%( (%{get(g:, 'gitsigns_head', '')})%)"
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
