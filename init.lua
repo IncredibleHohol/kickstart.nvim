@@ -160,6 +160,12 @@ vim.opt.scrolloff = 10
 -- Session options (includes localoptions for proper filetype/highlighting after restore)
 vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions'
 
+-- Diff mode, close to Android Studio: an empty gap in place of the filler dashes,
+-- changed words in place of changed characters, and cleaner hunks for moved blocks
+vim.opt.fillchars:append { diff = ' ' }
+vim.opt.diffopt:remove 'inline:char'
+vim.opt.diffopt:append { 'inline:word', 'algorithm:histogram' }
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -903,7 +909,7 @@ require('lazy').setup({
                     dark = 'mocha',
                 },
             }
-            vim.cmd.colorscheme 'catppuccin'
+            vim.cmd.colorscheme 'catppuccin-mocha-studio-git'
 
             -- You can configure highlights by doing something like:
             vim.cmd.hi 'Comment gui=none'

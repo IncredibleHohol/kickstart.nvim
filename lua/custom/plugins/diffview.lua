@@ -83,6 +83,8 @@ return {
     { '<leader>gh', '<Cmd>DiffviewFileHistory %<CR>', desc = 'File [h]istory' },
   },
   opts = {
+    -- the removed lines of the left pane get the DiffDelete color, not DiffAdd
+    enhanced_diff_hl = true,
     -- the file list on the right, as the review plugin and nvim-tree show it
     file_panel = {
       win_config = { position = 'right', width = 50 },

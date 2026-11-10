@@ -10,7 +10,7 @@ local hl = vim.api.nvim_set_hl
 hl(0, 'DiffAdd', { bg = '#294436' }) -- DIFF_INSERTED
 hl(0, 'DiffChange', { bg = '#30445c' }) -- DIFF_MODIFIED, blended 70% with the editor background
 hl(0, 'DiffText', { bg = '#43698d' }) -- DIFF_MODIFIED error stripe: the changed words of a changed line
-hl(0, 'DiffDelete', { bg = '#484a4a' }) -- DIFF_DELETED
+hl(0, 'DiffDelete', { bg = '#553f41' }) -- DIFF_DELETED (#484a4a), with some red added
 
 -- The bar of the collapsed unchanged lines.
 hl(0, 'Folded', { fg = '#868991', bg = '#2b2d30' }) -- FOLDED_TEXT_ATTRIBUTES fg, DIFF_SEPARATORS_BACKGROUND bg
