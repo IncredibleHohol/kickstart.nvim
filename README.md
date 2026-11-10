@@ -1,229 +1,143 @@
-# kickstart.nvim
+# Neovim config
 
-## Introduction
+My Neovim setup for Android (Kotlin) work on macOS. iOS (Swift) support is optional.
+It started from [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim).
 
-A starting point for Neovim that is:
+It works only on macOS on Apple Silicon. Some paths expect Homebrew in `/opt/homebrew`.
 
-* Small
-* Single-file
-* Completely Documented
+## Before you start
 
-**NOT** a Neovim distribution, but instead a starting point for your configuration.
+You need:
 
-## Installation
+- [Homebrew](https://brew.sh).
+- Android Studio in `/Applications/Android Studio.app`. Kotlin LSP uses its JBR.
+- Access to the private `polarsteps/android.nvim` and `polarsteps/polarsteps-review-assistant` repos.
 
-### Install Neovim
-
-Kickstart.nvim targets *only* the latest
-['stable'](https://github.com/neovim/neovim/releases/tag/stable) and latest
-['nightly'](https://github.com/neovim/neovim/releases/tag/nightly) of Neovim.
-If you are experiencing issues, please make sure you have the latest versions.
-
-### Install External Dependencies
-
-External Requirements:
-- Basic utils: `git`, `make`, `unzip`, C Compiler (`gcc`)
-- [ripgrep](https://github.com/BurntSushi/ripgrep#installation)
-- Clipboard tool (xclip/xsel/win32yank or other depending on platform)
-- A [Nerd Font](https://www.nerdfonts.com/): optional, provides various icons
-  - if you have it set `vim.g.have_nerd_font` in `init.lua` to true
-- Language Setup:
-  - If want to write Typescript, you need `npm`
-  - If want to write Golang, you will need `go`
-  - etc.
-
-> **NOTE**
-> See [Install Recipes](#Install-Recipes) for additional Windows and Linux specific notes
-> and quick install snippets
-
-### Install Kickstart
-
-> **NOTE**
-> [Backup](#FAQ) your previous configuration (if any exists)
-
-Neovim's configurations are located under the following paths, depending on your OS:
-
-| OS | PATH |
-| :- | :--- |
-| Linux, MacOS | `$XDG_CONFIG_HOME/nvim`, `~/.config/nvim` |
-| Windows (cmd)| `%localappdata%\nvim\` |
-| Windows (powershell)| `$env:LOCALAPPDATA\nvim\` |
-
-#### Recommended Step
-
-[Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repo
-so that you have your own copy that you can modify, then install by cloning the
-fork to your machine using one of the commands below, depending on your OS.
-
-> **NOTE**
-> Your fork's url will be something like this:
-> `https://github.com/<your_github_username>/kickstart.nvim.git`
-
-#### Clone kickstart.nvim
-> **NOTE**
-> If following the recommended step above (i.e., forking the repo), replace
-> `nvim-lua` with `<your_github_username>` in the commands below
-
-<details><summary> Linux and Mac </summary>
+## 1. Install the tools
 
 ```sh
-git clone https://github.com/nvim-lua/kickstart.nvim.git "${XDG_CONFIG_HOME:-$HOME/.config}"/nvim
+brew install neovim tree-sitter-cli ripgrep fd gh git-lfs imagemagick \
+  jetbrains/utils/kotlin-lsp can1357/tap/omp
+brew install --cask ghostty font-jetbrains-mono-nerd-font
+curl -fsSL https://claude.ai/install.sh | bash
+
+gh auth login
+git lfs install
 ```
 
-</details>
+| Tool | Used for |
+| :--- | :------- |
+| `neovim` 0.12 or newer | The config and the `main` branch of nvim-treesitter |
+| `tree-sitter-cli` | nvim-treesitter compiles the parsers with it |
+| `ripgrep`, `fd` | Telescope search |
+| `gh` | PR signs in the gutter, PR review |
+| `git-lfs` | PR review |
+| `imagemagick` | snacks.image converts images, for example in Diffview |
+| `kotlin-lsp` | Kotlin LSP with kotlin.nvim |
+| `claude` | Claude Code with claudecode.nvim (`<leader>ac`) |
+| `omp` | The first tab of the terminal panel (`<leader>ao`), PR review agents |
+| Ghostty | A terminal with the kitty graphics protocol, for images |
+| JetBrains Mono Nerd Font | Icons |
 
-<details><summary> Windows </summary>
+Homebrew installs the Xcode Command Line Tools. They give `git`, `make`, and `clang`.
+Mason installs `lua_ls` and `stylua` when Neovim starts for the first time.
 
-If you're using `cmd.exe`:
+## 2. Set up Ghostty
+
+Add these lines to the Ghostty config (`~/Library/Application Support/com.mitchellh.ghostty/config.ghostty`):
 
 ```
-git clone https://github.com/nvim-lua/kickstart.nvim.git %localappdata%\nvim\
+font-family = "JetBrainsMono Nerd Font Mono"
+macos-option-as-alt = true
 ```
 
-If you're using `powershell.exe`
+`macos-option-as-alt` makes Option send Alt. The `<A-…>` keymaps need it: barbar buffers, mini.move, and the terminal panel tabs.
 
+## 3. Clone the repos
+
+Move an old config away first, if you have one:
+
+```sh
+mv ~/.config/nvim ~/.config/nvim.bak
+mv ~/.local/share/nvim ~/.local/share/nvim.bak
 ```
-git clone https://github.com/nvim-lua/kickstart.nvim.git $env:LOCALAPPDATA\nvim\
+
+Then clone the config and the two local plugins:
+
+```sh
+gh repo clone polarsteps/kickstart.nvim.android ~/.config/nvim
+gh repo clone polarsteps/android.nvim ~/.config/android.nvim
+gh repo clone polarsteps/polarsteps-review-assistant ~/StudioProjects/polarsteps-review-assistant
 ```
 
-</details>
+For the agent setup of the PR review, read the README of `polarsteps-review-assistant`.
 
-### Post Installation
-
-Start Neovim
+## 4. Start Neovim
 
 ```sh
 nvim
 ```
 
-That's it! Lazy will install all the plugins you have. Use `:Lazy` to view
-current plugin status. Hit `q` to close the window.
+lazy.nvim installs the plugins. Mason installs the tools. nvim-treesitter compiles the parsers.
+When this is done, restart Neovim and run:
 
-Read through the `init.lua` file in your configuration folder for more
-information about extending and exploring Neovim. That also includes
-examples of adding popularly requested plugins.
-
-
-### Getting Started
-
-[The Only Video You Need to Get Started with Neovim](https://youtu.be/m8C0Cq9Uv9o)
-
-### FAQ
-
-* What should I do if I already have a pre-existing neovim configuration?
-  * You should back it up and then delete all associated files.
-  * This includes your existing init.lua and the neovim files in `~/.local`
-    which can be deleted with `rm -rf ~/.local/share/nvim/`
-* Can I keep my existing configuration in parallel to kickstart?
-  * Yes! You can use [NVIM_APPNAME](https://neovim.io/doc/user/starting.html#%24NVIM_APPNAME)`=nvim-NAME`
-    to maintain multiple configurations. For example, you can install the kickstart
-    configuration in `~/.config/nvim-kickstart` and create an alias:
-    ```
-    alias nvim-kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
-    ```
-    When you run Neovim using `nvim-kickstart` alias it will use the alternative
-    config directory and the matching local directory
-    `~/.local/share/nvim-kickstart`. You can apply this approach to any Neovim
-    distribution that you would like to try out.
-* What if I want to "uninstall" this configuration:
-  * See [lazy.nvim uninstall](https://github.com/folke/lazy.nvim#-uninstalling) information
-* Why is the kickstart `init.lua` a single file? Wouldn't it make sense to split it into multiple files?
-  * The main purpose of kickstart is to serve as a teaching tool and a reference
-    configuration that someone can easily use to `git clone` as a basis for their own.
-    As you progress in learning Neovim and Lua, you might consider splitting `init.lua`
-    into smaller parts. A fork of kickstart that does this while maintaining the 
-    same functionality is available here:
-    * [kickstart-modular.nvim](https://github.com/dam9000/kickstart-modular.nvim)
-  * Discussions on this topic can be found here:
-    * [Restructure the configuration](https://github.com/nvim-lua/kickstart.nvim/issues/218)
-    * [Reorganize init.lua into a multi-file setup](https://github.com/nvim-lua/kickstart.nvim/pull/473)
-
-### Install Recipes
-
-Below you can find OS specific install instructions for Neovim and dependencies.
-
-After installing all the dependencies continue with the [Install Kickstart](#Install-Kickstart) step.
-
-#### Windows Installation
-
-<details><summary>Windows with Microsoft C++ Build Tools and CMake</summary>
-Installation may require installing build tools and updating the run command for `telescope-fzf-native`
-
-See `telescope-fzf-native` documentation for [more details](https://github.com/nvim-telescope/telescope-fzf-native.nvim#installation)
-
-This requires:
-
-- Install CMake and the Microsoft C++ Build Tools on Windows
-
-```lua
-{'nvim-telescope/telescope-fzf-native.nvim', build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build' }
-```
-</details>
-<details><summary>Windows with gcc/make using chocolatey</summary>
-Alternatively, one can install gcc and make which don't require changing the config,
-the easiest way is to use choco:
-
-1. install [chocolatey](https://chocolatey.org/install)
-either follow the instructions on the page or use winget,
-run in cmd as **admin**:
-```
-winget install --accept-source-agreements chocolatey.chocolatey
+```vim
+:checkhealth kickstart
 ```
 
-2. install all requirements using choco, exit previous cmd and
-open a new one so that choco path is set, and run in cmd as **admin**:
-```
-choco install -y neovim git ripgrep wget fd unzip gzip mingw make
-```
-</details>
-<details><summary>WSL (Windows Subsystem for Linux)</summary>
+## Android projects
 
-```
-wsl --install
-wsl
-sudo add-apt-repository ppa:neovim-ppa/unstable -y
-sudo apt update
-sudo apt install make gcc ripgrep unzip git xclip neovim
-```
-</details>
+Start Neovim in the project root, the folder with `gradlew`.
+If `app/src/main/AndroidManifest.xml` exists, the config runs Gradle tasks at startup.
+Kotlin LSP starts after these tasks. The task list is in `lua/custom/plugins/kotlin.lua`.
 
-#### Linux Install
-<details><summary>Ubuntu Install Steps</summary>
+Commands:
 
-```
-sudo add-apt-repository ppa:neovim-ppa/unstable -y
-sudo apt update
-sudo apt install make gcc ripgrep unzip git xclip neovim
-```
-</details>
-<details><summary>Debian Install Steps</summary>
+- `:KotlinLspPrepareDebug`: build the debug artifacts and restart Kotlin LSP.
+- `:KotlinLspPrepareAndroidImport`: build the import artifacts and restart Kotlin LSP.
+- `:KotlinLspReloadWorkspace`: restart Kotlin LSP.
 
-```
-sudo apt update
-sudo apt install make gcc ripgrep unzip git xclip curl
+## iOS projects (optional)
 
-# Now we install nvim
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-sudo rm -rf /opt/nvim-linux64
-sudo mkdir -p /opt/nvim-linux64
-sudo chmod a+rX /opt/nvim-linux64
-sudo tar -C /opt -xzf nvim-linux64.tar.gz
+Skip this section if you do not work on iOS projects.
 
-# make it available in /usr/local/bin, distro installs to /usr/bin
-sudo ln -sf /opt/nvim-linux64/bin/nvim /usr/local/bin/
-```
-</details>
-<details><summary>Fedora Install Steps</summary>
+You need Xcode in `/Applications/Xcode.app`. Then install the tools:
 
-```
-sudo dnf install -y gcc make git ripgrep fd-find unzip neovim
-```
-</details>
+```sh
+sudo xcode-select -s /Applications/Xcode.app
+xcodebuild -runFirstLaunch
 
-<details><summary>Arch Install Steps</summary>
-
+brew install xcbeautify xcode-build-server xcp swiftlint jq coreutils pipx
+pipx install pymobiledevice3
 ```
-sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip neovim
-```
-</details>
 
+| Tool | Used for |
+| :--- | :------- |
+| `xcbeautify`, `xcode-build-server`, `xcp`, `jq`, `coreutils`, `pymobiledevice3` | xcodebuild.nvim: build, test, debug, project files, physical devices |
+| `swiftlint` | Swift lint with nvim-lint |
+
+Xcode gives `sourcekit-lsp` (Swift LSP) and `lldb` (debugger).
+
+The config also calls `swiftformat` (Swift format on save) and `xcodegen` (`<leader>xg`).
+Install them only if you need them: `brew install swiftformat xcodegen`.
+
+Restart Neovim and run:
+
+```vim
+:checkhealth xcodebuild
+```
+
+Run `:XcodebuildSetup` once in each project.
+
+New Swift files get a template from `~/.config/nvim/lua/templates/`. See `lua/templates/command.lua`.
+
+## Fixed paths
+
+The config expects these paths. If a path is different on your Mac, change it in the file.
+
+| Path | File |
+| :--- | :--- |
+| `~/.config/android.nvim` | `lua/custom/plugins/android.lua` |
+| `~/StudioProjects/polarsteps-review-assistant/nvim` | `lua/custom/plugins/pr-review.lua` |
+| `/opt/homebrew/opt/kotlin-lsp/libexec` | `lua/custom/plugins/kotlin.lua` |
+| `/Applications/Android Studio.app/Contents/jbr/Contents/Home` | `lua/custom/plugins/kotlin.lua` |
