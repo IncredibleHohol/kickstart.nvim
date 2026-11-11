@@ -275,18 +275,16 @@ function M.focus(name, cmd)
   end
 end
 
---- Shows the shell tab and focuses it. Starts the shell in a new tab when there is no shell tab, or when new is true.
+--- Shows the shell tab as M.focus does. Starts the shell in a new tab when new is true.
 --- <C-r> in a new tab opens a Telescope picker with the zsh history.
 function M.shell(new)
-  local existing = not new and find 'term'
-  if existing then
-    show(existing, true)
-    return
+  local cmd = { vim.o.shell }
+  local buf = new and start('term', cmd) or M.focus('term', cmd)
+  if buf then
+    vim.keymap.set('t', '<C-r>', function()
+      pick_history(buf)
+    end, { buffer = buf, desc = 'Search shell history' })
   end
-  local buf = start('term', { vim.o.shell })
-  vim.keymap.set('t', '<C-r>', function()
-    pick_history(buf)
-  end, { buffer = buf, desc = 'Search shell history' })
 end
 
 --- Hides the panel when it is open. Otherwise shows the last tab, or starts omp when there are no tabs.

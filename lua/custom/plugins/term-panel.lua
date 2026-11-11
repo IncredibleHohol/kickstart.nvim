@@ -22,7 +22,7 @@ return {
       function()
         require('custom.term_panel').shell()
       end,
-      desc = 'Terminal tab',
+      desc = 'Toggle terminal tab',
     },
     {
       '<leader>aT',
