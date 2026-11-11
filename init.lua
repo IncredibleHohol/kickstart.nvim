@@ -158,7 +158,8 @@ vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 
 -- Session options (includes localoptions for proper filetype/highlighting after restore)
-vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions'
+-- No terminal: a restored terminal window runs its command again, for example a new Claude session.
+vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,localoptions'
 
 -- Diff mode, close to Android Studio: an empty gap in place of the filler dashes,
 -- changed words in place of changed characters, and cleaner hunks for moved blocks
