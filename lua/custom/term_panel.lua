@@ -4,7 +4,6 @@ local M = {}
 
 local tabs = {} -- { buf = number, name = string, title = string? }, in tab order
 local last -- the buffer that the panel showed last
-local claude -- the buffer of the Claude Code tab
 
 -- Options of the panel window. A new window copies the options of the current window, and Diffview sets some of them.
 -- A number, sign or fold column makes the terminal narrower. This breaks programs that fill the screen.
@@ -109,9 +108,6 @@ local function remove(buf)
     return
   end
   table.remove(tabs, i)
-  if buf == claude then
-    claude = nil
-  end
   local next = tabs[math.min(i, #tabs)]
   if last == buf then
     last = next and next.buf
@@ -136,8 +132,8 @@ local function remove(buf)
   render()
 end
 
---- Starts cmd in a new tab. Returns the buffer, or raises the jobstart error.
-local function start(name, cmd, opts, focus)
+--- Starts cmd in a new tab and focuses it. Returns the buffer, or raises the jobstart error.
+local function start(name, cmd)
   local buf = vim.api.nvim_create_buf(false, false)
   vim.bo[buf].bufhidden = 'hide'
   tabs[#tabs + 1] = { buf = buf, name = name }
@@ -154,7 +150,7 @@ local function start(name, cmd, opts, focus)
       end
     end,
   })
-  opts.term = true
+  local opts = { term = true }
   opts.on_exit = function()
     vim.schedule(function()
       remove(buf)
@@ -179,9 +175,7 @@ local function start(name, cmd, opts, focus)
       M.select(i)
     end, { buffer = buf, desc = 'Terminal tab ' .. i })
   end
-  if focus then
-    enter()
-  end
+  enter()
   return buf
 end
 
@@ -251,7 +245,7 @@ end
 
 --- Starts cmd (an argv list) in a new tab and focuses it.
 function M.new(name, cmd)
-  start(name, cmd, {}, true)
+  start(name, cmd)
 end
 
 --- Returns the buffer of a tab with this name, or nil. The shown tab wins over the other tabs.
@@ -267,6 +261,20 @@ local function find(name)
   end
 end
 
+--- Shows the tab with this name and focuses it. When the cursor is in that tab already, it hides the panel.
+--- Starts cmd in a new tab when there is no tab with this name. Returns the buffer of a new tab, or nil.
+function M.focus(name, cmd)
+  local buf = find(name)
+  if not buf then
+    return start(name, cmd)
+  end
+  if buf == shown() and vim.api.nvim_get_current_win() == panel() then
+    hide()
+  else
+    show(buf, true)
+  end
+end
+
 --- Shows the shell tab and focuses it. Starts the shell in a new tab when there is no shell tab, or when new is true.
 --- <C-r> in a new tab opens a Telescope picker with the zsh history.
 function M.shell(new)
@@ -275,7 +283,7 @@ function M.shell(new)
     show(existing, true)
     return
   end
-  local buf = start('term', { vim.o.shell }, {}, true)
+  local buf = start('term', { vim.o.shell })
   vim.keymap.set('t', '<C-r>', function()
     pick_history(buf)
   end, { buffer = buf, desc = 'Search shell history' })
@@ -306,42 +314,5 @@ function M.select(i)
     show(tabs[i].buf, true)
   end
 end
-
---- A claudecode.nvim terminal provider: Claude Code runs in a tab of the panel.
-M.claude_provider = {
-  setup = function() end,
-  open = function(cmd, env, config, focus)
-    if claude then
-      show(claude, focus ~= false)
-    else
-      claude = start('claude', require('claudecode.utils').parse_command(cmd), { env = env, cwd = config.cwd }, focus ~= false)
-    end
-  end,
-  close = function()
-    if claude then
-      remove(claude)
-    end
-  end,
-  simple_toggle = function(cmd, env, config)
-    if claude and shown() == claude then
-      hide()
-    else
-      M.claude_provider.open(cmd, env, config, true)
-    end
-  end,
-  focus_toggle = function(cmd, env, config)
-    if claude and shown() == claude and vim.api.nvim_get_current_win() == panel() then
-      hide()
-    else
-      M.claude_provider.open(cmd, env, config, true)
-    end
-  end,
-  get_active_bufnr = function()
-    return claude
-  end,
-  is_available = function()
-    return true
-  end,
-}
 
 return M

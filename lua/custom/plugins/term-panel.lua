@@ -31,5 +31,19 @@ return {
       end,
       desc = 'New terminal tab',
     },
+    {
+      '<leader>ac',
+      function()
+        require('custom.term_panel').focus('claude', { 'claude' })
+      end,
+      desc = 'Toggle Claude tab',
+    },
+    {
+      '<leader>aC',
+      function()
+        require('custom.term_panel').new('claude', { 'claude' })
+      end,
+      desc = 'New Claude tab',
+    },
   },
 }

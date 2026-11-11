@@ -34,7 +34,7 @@ git lfs install
 | `git-lfs` | PR review |
 | `imagemagick` | snacks.image converts images, for example in Diffview |
 | `kotlin-lsp` | Kotlin LSP with kotlin.nvim |
-| `claude` | Claude Code with claudecode.nvim (`<leader>ac`) |
+| `claude` | A Claude Code tab of the terminal panel (`<leader>ac`) |
 | `omp` | The first tab of the terminal panel (`<leader>ao`), PR review agents |
 | Ghostty | A terminal with the kitty graphics protocol, for images |
 | JetBrains Mono Nerd Font | Icons |
