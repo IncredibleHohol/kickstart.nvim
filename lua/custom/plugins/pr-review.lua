@@ -15,14 +15,9 @@ return {
       moves = true,
       reviewers = {
         'claude:opus#xhigh',
+        'claude:sonnet#xhigh',
         'omp:openai-codex/gpt-6.1-sol#xhigh',
-        'omp:openai-codex/gpt-6.1-sol#high',
-        'omp:openai-codex/gpt-6.1-sol#medium',
-        'omp:openai-codex/gpt-6.1-sol#low',
         'omp:openai-codex/gpt-6-astra#xhigh',
-        'omp:openai-codex/gpt-6-astra#high',
-        'omp:openai-codex/gpt-6-astra#medium',
-        'omp:openai-codex/gpt-6-astra#low',
       },
     }
   end,
