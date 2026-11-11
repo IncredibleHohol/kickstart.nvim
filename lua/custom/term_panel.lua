@@ -287,10 +287,14 @@ function M.shell(new)
   end
 end
 
---- Hides the panel when it is open. Otherwise shows the last tab, or starts omp when there are no tabs.
+--- Hides the panel when the cursor is in it. Focuses the panel when it is open.
+--- Otherwise shows the last tab, or starts omp when there are no tabs.
 function M.toggle()
-  if panel() then
+  local w = panel()
+  if w == vim.api.nvim_get_current_win() then
     hide()
+  elseif w then
+    enter()
   elseif last then
     show(last, true)
   else
