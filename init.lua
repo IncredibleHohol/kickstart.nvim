@@ -200,10 +200,47 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+--- Moves focus to the window in direction dir: 'h', 'j', 'k' or 'l'.
+--- Goes back to the previous window when it is next to the current window in that direction.
+--- Otherwise the cursor position selects the window, see `:help CTRL-W_k`.
+local function focus_window(dir)
+  local prev = vim.fn.win_getid(vim.fn.winnr '#')
+  if prev ~= 0 then
+    -- The first and last screen row and column of a window. One status line or separator is between two windows.
+    local function box(win)
+      local info = vim.fn.getwininfo(win)[1]
+      return info.winrow, info.winrow + info.winbar + info.height - 1, info.wincol, info.wincol + info.width - 1
+    end
+    local top, bottom, left, right = box(vim.api.nvim_get_current_win())
+    local p_top, p_bottom, p_left, p_right = box(prev)
+    local rows = p_top <= bottom and top <= p_bottom
+    local cols = p_left <= right and left <= p_right
+    local next_to = {
+      h = rows and p_right + 2 == left,
+      l = rows and right + 2 == p_left,
+      k = cols and p_bottom + 2 == top,
+      j = cols and bottom + 2 == p_top,
+    }
+    if next_to[dir] then
+      vim.cmd.wincmd 'p'
+      return
+    end
+  end
+  vim.cmd.wincmd(dir)
+end
+vim.keymap.set('n', '<C-h>', function()
+  focus_window 'h'
+end, { desc = 'Move focus to the left window' })
+vim.keymap.set('n', '<C-l>', function()
+  focus_window 'l'
+end, { desc = 'Move focus to the right window' })
+vim.keymap.set('n', '<C-j>', function()
+  focus_window 'j'
+end, { desc = 'Move focus to the lower window' })
+vim.keymap.set('n', '<C-k>', function()
+  focus_window 'k'
+end, { desc = 'Move focus to the upper window' })
 vim.keymap.set('n', '<leader>dl', '<CR>:lua require("dapui").toggle()<CR>', { silent = true, desc = 'Toggle logs' })
 vim.keymap.set('n', '<leader>dL', '<CR>:lua require("xcodebuild.integrations.dap").clear_console()<CR>', { silent = true, desc = 'Clear logs' })
 vim.env.XBS_FEAT_NEWFILE = 1
