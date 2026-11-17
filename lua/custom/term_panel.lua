@@ -1,8 +1,9 @@
--- One split at the bottom of a tabpage for terminals. It shows one terminal at a time and a winbar tab for each terminal.
--- The terminals keep running when they are not shown. A tab closes when its process exits.
+-- One split at the bottom of a tabpage for terminals and other buffers, for example logs.
+-- It shows one buffer at a time and a winbar tab for each buffer.
+-- The terminals keep running when they are not shown. A tab closes when its process exits or its buffer is wiped out.
 local M = {}
 
-local tabs = {} -- { buf = number, name = string, title = string? }, in tab order
+local tabs = {} -- { buf = number, name = string, title = string?, wipeout = autocmd id? }, in tab order
 local last -- the buffer that the panel showed last
 
 -- Options of the panel window. A new window copies the options of the current window, and Diffview sets some of them.
@@ -16,6 +17,8 @@ local win_opts = {
   diff = false,
   scrollbind = false,
   cursorbind = false,
+  -- Long log lines do not wrap.
+  wrap = false,
 }
 
 local function index_of(buf)
@@ -65,8 +68,12 @@ local function render()
 end
 
 local function enter()
-  vim.api.nvim_set_current_win(panel())
-  vim.cmd.startinsert()
+  local w = panel()
+  vim.api.nvim_set_current_win(w)
+  -- Insert mode in a buffer that is not a terminal only gives errors.
+  if vim.bo[vim.api.nvim_win_get_buf(w)].buftype == 'terminal' then
+    vim.cmd.startinsert()
+  end
 end
 
 local function set_win_opts(w)
@@ -101,8 +108,8 @@ local function hide()
   end
 end
 
---- Removes the tab and deletes its buffer. The panel shows the next tab, or closes after the last tab.
-local function remove(buf)
+--- Removes the tab and deletes its buffer, unless keep is true. The panel shows the next tab, or closes after the last tab.
+local function remove(buf, keep)
   local i = index_of(buf)
   if not i then
     return
@@ -126,10 +133,24 @@ local function remove(buf)
       end
     end
   end
-  if vim.api.nvim_buf_is_valid(buf) then
+  if not keep and vim.api.nvim_buf_is_valid(buf) then
     vim.api.nvim_buf_delete(buf, { force = true })
   end
   render()
+end
+
+--- Sets the keymaps that change tabs in buf.
+local function set_tab_keys(buf)
+  for _, key in ipairs { { '<A-]>', 1, 'Next terminal tab' }, { '<A-[>', -1, 'Previous terminal tab' } } do
+    vim.keymap.set({ 'n', 't' }, key[1], function()
+      M.cycle(key[2])
+    end, { buffer = buf, desc = key[3] })
+  end
+  for i = 1, 9 do
+    vim.keymap.set({ 'n', 't' }, '<A-' .. i .. '>', function()
+      M.select(i)
+    end, { buffer = buf, desc = 'Terminal tab ' .. i })
+  end
 end
 
 --- Starts cmd in a new tab and focuses it. Returns the buffer, or raises the jobstart error.
@@ -165,16 +186,7 @@ local function start(name, cmd)
     remove(buf)
     error(err, 0)
   end
-  for _, key in ipairs { { '<A-]>', 1, 'Next terminal tab' }, { '<A-[>', -1, 'Previous terminal tab' } } do
-    vim.keymap.set({ 'n', 't' }, key[1], function()
-      M.cycle(key[2])
-    end, { buffer = buf, desc = key[3] })
-  end
-  for i = 1, 9 do
-    vim.keymap.set({ 'n', 't' }, '<A-' .. i .. '>', function()
-      M.select(i)
-    end, { buffer = buf, desc = 'Terminal tab ' .. i })
-  end
+  set_tab_keys(buf)
   enter()
   return buf
 end
@@ -246,6 +258,34 @@ end
 --- Starts cmd (an argv list) in a new tab and focuses it.
 function M.new(name, cmd)
   start(name, cmd)
+end
+
+--- Shows buf, a buffer that exists already, in the panel. Adds a tab with this name when buf has no tab.
+--- It focuses the panel when focus is true.
+function M.attach(name, buf, focus)
+  if not index_of(buf) then
+    set_tab_keys(buf)
+    local wipeout = vim.api.nvim_create_autocmd('BufWipeout', {
+      buffer = buf,
+      once = true,
+      callback = function()
+        vim.schedule(function()
+          remove(buf)
+        end)
+      end,
+    })
+    tabs[#tabs + 1] = { buf = buf, name = name, wipeout = wipeout }
+  end
+  show(buf, focus)
+end
+
+--- Removes the tab of buf, a buffer that attach added. The buffer stays, so attach can show it again.
+function M.detach(buf)
+  local i = index_of(buf)
+  if i then
+    vim.api.nvim_del_autocmd(tabs[i].wipeout)
+    remove(buf, true)
+  end
 end
 
 --- Returns the buffer of a tab with this name, or nil. The shown tab wins over the other tabs.
