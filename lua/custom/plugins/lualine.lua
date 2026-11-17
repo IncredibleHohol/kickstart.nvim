@@ -56,6 +56,8 @@ return {
                 },
                 lualine_c = {},
                 lualine_x = {
+                    -- Kotlin LSP server that coding agents paused (lua/custom/agent_hold.lua)
+                    { require('custom.agent_hold').status, color = { fg = '#f38ba8' } },
                     { "' ' .. vim.g.xcodebuild_last_status", color = { fg = '#a6e3a1' } },
                     -- { "'󰙨 ' .. vim.g.xcodebuild_test_plan", color = { fg = "#a6e3a1", bg = "#161622" } },
                     { xcodebuild_device, color = { fg = '#f9e2af', bg = '#161622' } },

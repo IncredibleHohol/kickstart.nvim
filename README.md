@@ -97,6 +97,24 @@ Commands:
 - `:KotlinLspPrepareDebug`: build the debug artifacts and restart Kotlin LSP.
 - `:KotlinLspPrepareAndroidImport`: build the import artifacts and restart Kotlin LSP.
 - `:KotlinLspReloadWorkspace`: restart Kotlin LSP.
+- `:KotlinLspResume`: continue the Kotlin LSP server that coding agents paused.
+
+### Coding agents
+
+While a coding agent works in the project, Neovim pauses the Kotlin LSP server.
+When the agent stops, the server continues and handles all changes at once.
+The statusline shows `LSP paused: <agent>` while the server is paused.
+
+The agents report their state with `bin/nvim-agent busy|idle <agent>`. These hooks call it:
+
+| Agent | Hooks |
+| --- | --- |
+| Claude Code | `~/.claude/settings.json`: `UserPromptSubmit`, `Stop`, `StopFailure`, `SessionEnd` |
+| Codex | `~/.codex/hooks.json`: `UserPromptSubmit`, `Stop`, `Interrupt`, `SessionEnd`. Trust them with `/hooks`. |
+| omp | `~/.omp/agent/extensions/nvim-agent.ts` |
+| opencode | `~/.config/opencode/plugins/nvim-agent.js` |
+
+When an agent process exits, Neovim releases its hold within 30 seconds.
 
 ## iOS projects (optional)
 

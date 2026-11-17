@@ -1,0 +1,40 @@
+#!/bin/bash
+# Tells nvim that a coding agent works (busy) or stopped (idle). Agent hooks call it.
+# An nvim whose project contains the current directory pauses its Kotlin LSP server while an agent works
+# (lua/custom/agent_hold.lua).
+#
+# Usage: nvim-agent busy|idle <agent> [session]
+#   <agent>    program name of the agent, for example claude. The script uses it to find the agent process.
+#   [session]  separates sessions in one agent process, for example omp subagents.
+# NVIM_AGENT_PID sets the agent process directly. Plugins that run inside the agent process use it.
+set -u
+state=${1:-} name=${2:-} session=${3:-}
+if [[ $state != busy && $state != idle ]] || [[ -z $name ]]; then
+  echo 'usage: nvim-agent busy|idle <agent> [session]' >&2
+  exit 2
+fi
+
+# The agent process is $NVIM_AGENT_PID, or else the nearest parent process whose program name is <agent>.
+# nvim releases the hold when this process exits.
+agent_pid=${NVIM_AGENT_PID:-0}
+[[ $agent_pid =~ ^[0-9]+$ ]] || agent_pid=0
+pid=$PPID
+while ((agent_pid == 0 && pid > 1)); do
+  read -r ppid prog _ < <(ps -o ppid=,args= -p "$pid") || break
+  if [[ ${prog##*/} == "$name" ]]; then
+    agent_pid=$pid
+    break
+  fi
+  pid=$ppid
+done
+
+# A Vim string literal. A quote in it is written as two quotes.
+quote() { printf "'%s'" "$(printf %s "$1" | sed "s/'/''/g")"; }
+expr="v:lua.require'custom.agent_hold'.remote('$state', $(quote "$name"), $agent_pid, $(quote "$session"), $(quote "$(pwd -P)"))"
+
+# Each nvim listens on a socket in $TMPDIR/nvim.$USER. The socket of an nvim that exited refuses the connection.
+tmp=${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR)}
+for sock in "${tmp%/}/nvim.$USER"/*/nvim.*.0; do
+  [[ -S $sock ]] && nvim --clean --headless --server "$sock" --remote-expr "$expr" </dev/null >/dev/null 2>&1 &
+done
+wait
