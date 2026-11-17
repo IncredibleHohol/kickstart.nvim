@@ -27,26 +27,6 @@ local function side_path(file)
   return path
 end
 
--- Diffview shows an empty buffer for binary files. In a terminal with the kitty
--- graphics protocol (Ghostty), show image files with snacks.image instead.
-local function show_image(_, winid)
-  local view = require('diffview.lib').get_current_view()
-  local win = view and vim.iter(view.cur_layout.windows):find(function(w)
-    return w.id == winid
-  end)
-  local file = win and win.file
-  if not (file and file.binary and not file.nulled and Snacks.image.supports(file.path)) then
-    return
-  end
-
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.bo[buf].bufhidden = 'wipe'
-  vim.api.nvim_win_set_buf(winid, buf)
-  -- in diff mode, the equal lines of the two image buffers fold away
-  vim.wo[winid].diff = false
-  Snacks.image.buf.attach(buf, { src = side_path(file) })
-end
-
 -- Opens every side of the selected file (old and new) in Preview.app.
 local function open_in_preview()
   local view = require('diffview.lib').get_current_view()
@@ -94,6 +74,5 @@ return {
       file_panel = { preview_keymap },
       file_history_panel = { preview_keymap },
     },
-    hooks = { diff_buf_win_enter = show_image },
   },
 }

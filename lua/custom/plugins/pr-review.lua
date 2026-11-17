@@ -3,6 +3,8 @@ return {
   name = 'pr-review',
   dir = '~/StudioProjects/polarsteps-review-assistant/nvim',
   dependencies = { 'sindrets/diffview.nvim', 'nvim-telescope/telescope.nvim' },
+  -- at start: the plugin also draws changed images in every diffview
+  event = 'VeryLazy',
   cmd = 'PrReview',
   keys = { { '<leader>rr', desc = 'Review: the pull requests' } },
   config = function()
