@@ -90,6 +90,7 @@ When this is done, restart Neovim and run:
 Start Neovim in the project root, the folder with `gradlew`.
 If `app/src/main/AndroidManifest.xml` exists, the config runs Gradle tasks at startup.
 Kotlin LSP starts after these tasks. The task list is in `lua/custom/plugins/kotlin.lua`.
+When Neovim exits, the config runs `./gradlew --stop`. This stops all Gradle daemons of the project's Gradle version.
 
 Commands:
 

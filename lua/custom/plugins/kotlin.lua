@@ -91,8 +91,20 @@ return {
   -- Runs at startup, before any Kotlin file opens: in an Android project (cwd),
   -- build the artifacts the LSP import needs, then let the LSP start.
   init = function()
-    if not vim.uv.fs_stat(find_gradle_root() .. "/app/src/main/AndroidManifest.xml") then
+    local root = find_gradle_root()
+    if not vim.uv.fs_stat(root .. "/app/src/main/AndroidManifest.xml") then
       return
+    end
+
+    -- Gradle keeps an idle daemon (and its Kotlin compile daemon) for 3 hours. Stop it with Neovim.
+    -- This stops every daemon of this Gradle version, also the ones Android Studio or a terminal uses.
+    if vim.fn.executable(root .. "/gradlew") == 1 then
+      vim.api.nvim_create_autocmd("VimLeavePre", {
+        desc = "Stop the Gradle daemons",
+        callback = function()
+          vim.system({ "./gradlew", "--stop" }, { cwd = root, detach = true, stdout = false, stderr = false })
+        end,
+      })
     end
 
     preparing = true
