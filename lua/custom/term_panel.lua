@@ -17,8 +17,8 @@ local win_opts = {
   diff = false,
   scrollbind = false,
   cursorbind = false,
-  -- Long log lines do not wrap.
-  wrap = false,
+  -- Long log lines wrap. Terminal lines are never wider than the window, so wrap does not change the terminals.
+  wrap = true,
 }
 
 local function index_of(buf)
